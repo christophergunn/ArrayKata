@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Domain;
+﻿using Domain;
+using Domain.Holidays;
 using NUnit.Framework;
 
 namespace Tests
@@ -44,12 +41,12 @@ namespace Tests
         public void CanCalculateDiagonalDistance()
         {
             // Arrange - two points in space
-            Point a = new Point(x: 0.0, y: 0.0);
-            Point b = new Point(x: 2.0, y: 2.0);
+            Point london = new Point(x: 0.0, y: 0.0);
+            Point manchester = new Point(x: 2.0, y: 2.0);
 
             // Act
             var planner = new RoutePlanner();
-            var distance = planner.CalculateDistance(a, b);
+            var distance = planner.CalculateDistance(london, manchester);
 
             // Assert
             Assert.AreEqual(2.8284271, distance, 0.01);
@@ -75,9 +72,9 @@ namespace Tests
         public void CanWorkOutDistanceAlongARoute()
         {
             // Arrange
-            Point a = new Point(x: 0.0, y: 0.0);
-            Point b = new Point(x: 0.0, y: 1.0);
-            Point c = new Point(x: 2.0, y: 3.0);
+            var a = Earth.London;
+            var b = Earth.Paris;
+            var c = Earth.Berlin;
             Route londonToBerlinViaParis = new Route("London", "Berlin", new [] { a, b, c });
 
             // Act
@@ -85,14 +82,50 @@ namespace Tests
             var distance = planner.CalculateDistance(londonToBerlinViaParis);
 
             // Assert
-            Assert.AreEqual(1.0 + 2.8284271, distance, 0.01);
-            Assert.AreEqual(1.0 + 2.8284271, londonToBerlinViaParis.Distance, 0.01);
+            Assert.AreEqual(0.0, distance, 0.01);
+            Assert.AreEqual(0.0, londonToBerlinViaParis.Distance, 0.01);
         }
 
         [Test]
         public void CanWorkOutShortestRoute()
         {
-            
+            // Arrange
+            var manchesterToBerlinViaAmsterdam = new Route("Manchester", "Berlin", new [] { Earth.Manchester, Earth.Amsterdam, Earth.Berlin });
+            var manchesterToBerlinViaLondonAndAmsterdam = new Route("Manchester", "Berlin", new[] { Earth.Manchester, Earth.London, Earth.Amsterdam, Earth.Berlin });
+
+            // Act
+            var planner = new RoutePlanner();
+            var shortest =
+                planner.FindShortestRoute(
+                    new[] { manchesterToBerlinViaAmsterdam, manchesterToBerlinViaLondonAndAmsterdam }, 
+                    "Manchester", "Berlin");
+
+            // Assert - returned route is from Manchester to Berlin
+            Assert.AreEqual("Manchester", shortest.Origin);
+            Assert.AreEqual("Berlin", shortest.Destination);
+
+            CollectionAssert.AreEqual(new[] { Earth.Manchester, Earth.Amsterdam, Earth.Berlin }, shortest.Points);
+        }
+
+        [Test]
+        public void CanWorkOutShortestRoute_FromMadrid()
+        {
+            // Arrange
+            var manchesterToRomeViaBrussels = new Route("Manchester", "Rome", new[] { Earth.Manchester, Earth.Brussels, Earth.Rome });
+            var manchesterToRomeViaParis = new Route("Manchester", "Rome", new[] { Earth.Manchester, Earth.Paris, Earth.Rome });
+
+            // Act
+            var planner = new RoutePlanner();
+            var shortest =
+                planner.FindShortestRoute(
+                    new[] { manchesterToRomeViaBrussels, manchesterToRomeViaParis },
+                    "Manchester", "Rome");
+
+            // Assert - returned route is from Manchester to Berlin
+            Assert.AreEqual("Manchester", shortest.Origin);
+            Assert.AreEqual("Rome", shortest.Destination);
+
+            CollectionAssert.AreEqual(null, shortest.Points);   // replace 'null' with the answer
         }
     }
 }
